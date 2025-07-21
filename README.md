@@ -1,1 +1,1 @@
-# Cohere_RAG_model
+# RAG_multimodal_Cohere
