@@ -7,7 +7,7 @@ from openai import OpenAI
 from utils import embed_image
 from faiss_utils import load_faiss_index, normalize
 
-def search_image_by_question(question, co, top_k=4):
+def search_image_by_question(question, co, top_k=1):
     # Embed the question correctly
     response = co.embed(
         texts=[question],
