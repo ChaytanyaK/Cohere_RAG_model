@@ -90,5 +90,9 @@ Retrieved Text Context:
         return answer_text
 
     except Exception as e:
-        print("\n❌ ERROR DETAILS →", type(e).__name__, str(e), "\n")
+        import traceback
+        print("\n──────── ERROR TRACEBACK ────────")
+        traceback.print_exc()
+        print("──────── END TRACEBACK ─────────\n")
         return "An error occurred while processing the request."
+
