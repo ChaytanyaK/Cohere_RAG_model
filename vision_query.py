@@ -32,7 +32,7 @@ def encode_image_to_base64(img_path: str) -> str:
 
 
 def answer_question_about_images(question: str, matched_paths: list, client: OpenAI,
-                                 model="gpt-4o-mini", retrieved_text="", verbose=True) -> str:
+                                 model="gpt-4.1-mini", retrieved_text="", verbose=True) -> str:
     """
     Sends a multimodal prompt (text + images) to the LLM and returns the answer.
     NOTE: Model changed to gpt-4o-mini (supports image input).
