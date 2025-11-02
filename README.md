@@ -35,22 +35,20 @@ Streamlit UI Output
 
 ## Project Structure
 
-Cohere_RAG_model-main/
-│── app.py                         # Streamlit app entry point
-│── config.py                      # API configuration & global paths
-│── embeddings.py                  # Cohere text embedding utilities
-│── faiss_utils.py                 # FAISS index persistence & vector operations
-│── pdf_processing_embedding.py    # PDF → text → page-level embeddings
-│── vision_query.py                # Image embedding + visual question answering
-│── utils.py                       # File hashing, JSON helpers, support functions
-│
-├── source_docs/                   # PDFs to be processed and indexed
-├── images/                        # Extracted images & uploaded images for search
-├── store/                         # FAISS index + filename mappings (local persistence)
-├── hashes/                        # File hash cache to prevent re-embedding duplicates
-├── chat_data/                     # Optional conversation persistence
-└── .env                           # API keys (not committed)
+- `app.py` — Streamlit UI entry point
+- `config.py` — API keys + project paths
+- `embeddings.py` — Cohere embedding generation
+- `faiss_utils.py` — FAISS index load/save/search helpers
+- `pdf_processing_embedding.py` — PDF → text → embeddings
+- `vision_query.py` — Image retrieval + visual QA
+- `utils.py` — hashing + helper utilities
 
+**Directories**
+- `source_docs/` — PDFs to ingest into the RAG index
+- `images/` — extracted & uploaded visualization assets
+- `store/` — FAISS index + vector → filename mapping
+- `hashes/` — deduplication cache for embeddings
+- `chat_data/` — optional chat session persistence
 ## Setup & Installation
 
 1. Install dependencies:
