@@ -33,82 +33,63 @@ def encode_image_to_base64(img_path: str) -> str:
 
 
 def answer_question_about_images(question: str, matched_paths: list, client: OpenAI,
-                                 model="gpt-4.1-mini", verbose=True) -> str:
+                                 model="gpt-4.1-mini", retrieved_text="", verbose=True) -> str:
     """
-    Sends a multimodal prompt (text + multiple images) to the LLM and returns the answer.
-
-    Parameters:
-    - question (str): User query
-    - matched_paths (list): List of local image paths
-    - client: OpenAI or AzureOpenAI client
-    - model (str): Model to use (e.g., gpt-4.1-mini, gpt-4o)
-    - verbose (bool): Whether to print the response
-
-    Returns:
-    - response text
+    Sends a multimodal prompt (text + images) to the LLM and returns the answer.
     """
-    try:
-        # Encode each image to base64 and build image_url blocks
-        image_contents = []
-        for img_path in matched_paths:
-            b64 = encode_image_to_base64(img_path)
-            image_contents.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}})
 
-        # Combine the text question and the images
-        message_content = [{"type": "text", "text": f"Answer clearly: {question}"}] + image_contents
-
-        # response = client.chat.completions.create(
-        #     model=model,
-        #     messages=[
-        #         {"role": "system", "content": "You are a helpful assistant."},
-        #         {"role": "user", "content": message_content},
-        #     ],
-        #     max_tokens=1000,
-        # )
-
-
-
-SYSTEM_PROMPT = """
+    SYSTEM_PROMPT = """
 You are an AI assistant inside a Retrieval-Augmented Generation (RAG) system.
 
-You must answer questions **only using the text and images provided in the retrieved context**.
-Do **not** use outside world knowledge or assumptions.
+You must answer questions ONLY using the provided retrieved text and images.
+Do NOT use outside knowledge. Do NOT hallucinate.
 
-If the answer is not clearly supported by the retrieved pages or images, respond with:
+If the answer is not clearly supported by the retrieved text or images, respond with:
 "I don’t have enough information in the provided documents to answer that."
 
-If the user's question is vague, unclear, or could mean different things, **ask a clarifying question first**.
+If the user's question is unclear, missing context, or overly broad, ask a clarifying question before answering.
 
-### Response Requirements:
-- Be **concise, factual, and specific**.
-- If possible, reference the page number from the retrieved text.
-- If an image is displayed, describe **only what is visually observable**—do not infer or assume things not shown.
-- Never hallucinate or invent facts.
-"""
+Response Requirements:
+- Be concise, factual, and specific.
+- Reference page numbers from the retrieved text when possible.
+- Describe only what is visually observable in images — no assumptions.
+""".strip()
 
-USER_PROMPT = f"""
+    # Build USER prompt
+    USER_PROMPT = f"""
 User Question:
 {question}
 
-Retrieved Text Context (if available):
-{retrieved_text}
+Retrieved Text Context:
+{retrieved_text if retrieved_text else "No text context available."}
 
-Retrieved Images (if available): Interpreted as needed.
+If the answer cannot be determined from the above context, ask for clarification.
+""".strip()
 
-If the answer cannot be fully determined from the above context, ask a clarifying question.
-"""
+    try:
+        # Prepare multimodal message content
+        message_content = [{"type": "text", "text": USER_PROMPT}]
 
-response = client.chat.completions.create(
-    model="gpt-4.1-mini",
-    messages=[
-        {"role": "system", "content": SYSTEM_PROMPT.strip()},
-        {"role": "user", "content": USER_PROMPT.strip()},
-    ],
-    max_tokens=1000,
-)
+        for img_path in matched_paths:
+            with open(img_path, "rb") as img:
+                img_bytes = img.read()
+            message_content.append({
+                "type": "image",
+                "image": img_bytes,
+                "mime_type": "image/png"
+            })
 
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": message_content},
+            ],
+            max_tokens=800,
+        )
 
         answer_text = response.choices[0].message.content.strip()
+
         if verbose:
             print("🧠 LLM Response:", answer_text)
 
@@ -116,4 +97,4 @@ response = client.chat.completions.create(
 
     except Exception as e:
         print(f"❌ Error processing images or getting response: {e}")
-        return "Error occurred during processing."
+        return "An error occurred while processing the request."
