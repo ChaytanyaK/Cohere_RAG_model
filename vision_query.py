@@ -57,14 +57,56 @@ def answer_question_about_images(question: str, matched_paths: list, client: Ope
         # Combine the text question and the images
         message_content = [{"type": "text", "text": f"Answer clearly: {question}"}] + image_contents
 
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": message_content},
-            ],
-            max_tokens=1000,
-        )
+        # response = client.chat.completions.create(
+        #     model=model,
+        #     messages=[
+        #         {"role": "system", "content": "You are a helpful assistant."},
+        #         {"role": "user", "content": message_content},
+        #     ],
+        #     max_tokens=1000,
+        # )
+
+
+
+SYSTEM_PROMPT = """
+You are an AI assistant inside a Retrieval-Augmented Generation (RAG) system.
+
+You must answer questions **only using the text and images provided in the retrieved context**.
+Do **not** use outside world knowledge or assumptions.
+
+If the answer is not clearly supported by the retrieved pages or images, respond with:
+"I don’t have enough information in the provided documents to answer that."
+
+If the user's question is vague, unclear, or could mean different things, **ask a clarifying question first**.
+
+### Response Requirements:
+- Be **concise, factual, and specific**.
+- If possible, reference the page number from the retrieved text.
+- If an image is displayed, describe **only what is visually observable**—do not infer or assume things not shown.
+- Never hallucinate or invent facts.
+"""
+
+USER_PROMPT = f"""
+User Question:
+{question}
+
+Retrieved Text Context (if available):
+{retrieved_text}
+
+Retrieved Images (if available): Interpreted as needed.
+
+If the answer cannot be fully determined from the above context, ask a clarifying question.
+"""
+
+response = client.chat.completions.create(
+    model="gpt-4.1-mini",
+    messages=[
+        {"role": "system", "content": SYSTEM_PROMPT.strip()},
+        {"role": "user", "content": USER_PROMPT.strip()},
+    ],
+    max_tokens=1000,
+)
+
 
         answer_text = response.choices[0].message.content.strip()
         if verbose:
